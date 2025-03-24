@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -70,12 +69,11 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	var us Users
 	err = json.Unmarshal(readFile, &us.Users)
 	if err != nil {
-		fmt.Println(err)
+		http.Error(w, "unable to unmarshal updated users", http.StatusInternalServerError)
 		return
 	}
 
 	us.Users = append(us.Users, user)
-	fmt.Println(us.Users)
 
 	updatedUsersBytes, err := json.Marshal(us.Users)
 	if err != nil {
@@ -102,6 +100,10 @@ func ListUsersHandler(w http.ResponseWriter, r *http.Request) {
 
 	_, err = w.Write(userBytes)
 	if err != nil {
+		http.Error(w, "unable to process users", http.StatusInternalServerError)
 		return
 	}
+
+	w.WriteHeader(http.StatusOK)
+	return
 }
