@@ -1,4 +1,4 @@
-module github.com/redscaresu/natwest
+module github.com/redscaresu/usersAPI
 
 go 1.24.1
 

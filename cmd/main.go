@@ -5,7 +5,7 @@ import (
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"
-	"github.com/redscaresu/natwest/handlers"
+	"github.com/redscaresu/usersAPI/handlers"
 )
 
 func main() {
