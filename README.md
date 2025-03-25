@@ -24,3 +24,11 @@ curl -X POST http://localhost:8080/user/create \
 }'
 
 curl http://localhost:8080/user/listusers
+
+curl -X PATCH http://localhost:8080/user/updateuser \
+-H "Content-Type: application/json" \
+-d '{
+  "first_name": "john",
+  "last_name": "xxx",
+  "email_address": "apple@googlemail.com"
+}'

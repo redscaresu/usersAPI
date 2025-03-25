@@ -24,6 +24,7 @@ func RegisterRoutes(r *chi.Mux) {
 	r.Route("/user", func(r chi.Router) {
 		r.Post("/create", CreateUserHandler)
 		r.Get("/listusers", ListUsersHandler)
+		r.Patch("/updateuser", UpdateUserHandler)
 	})
 }
 
@@ -101,6 +102,60 @@ func ListUsersHandler(w http.ResponseWriter, r *http.Request) {
 	_, err = w.Write(userBytes)
 	if err != nil {
 		http.Error(w, "unable to process users", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	return
+}
+
+func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Body == nil {
+		http.Error(w, "no body supplied", http.StatusBadRequest)
+		return
+	}
+
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "unable to read body", http.StatusInternalServerError)
+		return
+	}
+
+	var userUpdate User
+	err = json.Unmarshal(bodyBytes, &userUpdate)
+	if err != nil {
+		http.Error(w, "unable to process user update", http.StatusInternalServerError)
+		return
+	}
+
+	userFile, err := os.ReadFile("user.json")
+	if err != nil {
+		http.Error(w, "unable to read file", http.StatusInternalServerError)
+		return
+	}
+
+	var currentUsers Users
+	err = json.Unmarshal(userFile, &currentUsers.Users)
+	if err != nil {
+		http.Error(w, "unable to process current users", http.StatusInternalServerError)
+		return
+	}
+
+	for i, v := range currentUsers.Users {
+		if v.FirstName == userUpdate.FirstName {
+			currentUsers.Users[i] = userUpdate
+		}
+	}
+
+	currentUserByte, err := json.Marshal(currentUsers.Users)
+	if err != nil {
+		http.Error(w, "unable to process current users", http.StatusInternalServerError)
+		return
+	}
+
+	err = os.WriteFile("user.json", currentUserByte, 0777)
+	if err != nil {
+		http.Error(w, "unable to write updated users to file", http.StatusInternalServerError)
 		return
 	}
 
