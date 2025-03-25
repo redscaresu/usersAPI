@@ -1,4 +1,4 @@
-curl -X POST http://localhost:8080/user/create \
+curl -X POST http://localhost:8080/create \
 -H "Content-Type: application/json" \
 -d '{
   "first_name": "dave",
@@ -6,7 +6,7 @@ curl -X POST http://localhost:8080/user/create \
   "email_address": "a@gemail.com"
 }'
 
-curl -X POST http://localhost:8080/user/create \
+curl -X POST http://localhost:8080/create \
 -H "Content-Type: application/json" \
 -d '{
   "first_name": "john",
@@ -15,7 +15,7 @@ curl -X POST http://localhost:8080/user/create \
 }'
 
 
-curl -X POST http://localhost:8080/user/create \
+curl -X POST http://localhost:8080/create \
 -H "Content-Type: application/json" \
 -d '{
   "first_name": "clive",
@@ -23,12 +23,12 @@ curl -X POST http://localhost:8080/user/create \
   "email_address": "foo@googlemail.com"
 }'
 
-curl http://localhost:8080/user/listusers
+curl http://localhost:8080/listusers
 
-curl -X PATCH http://localhost:8080/user/updateuser \
+curl -X PATCH http://localhost:8080/updateuser \
 -H "Content-Type: application/json" \
 -d '{
-  "first_name": "john",
+  "first_name": "clive",
   "last_name": "xxx",
-  "email_address": "apple@googlemail.com"
+  "email_address": "yesyes@googlemail.com"
 }'

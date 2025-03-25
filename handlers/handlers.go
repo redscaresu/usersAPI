@@ -6,8 +6,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-
-	"github.com/go-chi/chi/v5"
 )
 
 type User struct {
@@ -20,12 +18,11 @@ type Users struct {
 	Users []User
 }
 
-func RegisterRoutes(r *chi.Mux) {
-	r.Route("/user", func(r chi.Router) {
-		r.Post("/create", CreateUserHandler)
-		r.Get("/listusers", ListUsersHandler)
-		r.Patch("/updateuser", UpdateUserHandler)
-	})
+func RegisterRoutes(r *http.ServeMux) {
+	r.HandleFunc("/create", CreateUserHandler)
+	r.HandleFunc("/listusers", ListUsersHandler)
+	r.HandleFunc("/updateuser", UpdateUserHandler)
+
 }
 
 func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -105,7 +102,6 @@ func ListUsersHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
 	return
 }
 
