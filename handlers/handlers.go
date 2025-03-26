@@ -6,26 +6,76 @@ import (
 	"io"
 	"net/http"
 	"os"
+
+	"github.com/redscaresu/usersAPI/handlers/models"
 )
 
-type User struct {
-	FirstName    string `json:"first_name"`
-	LastName     string `json:"last_name"`
-	EmailAddress string `json:"email_address"`
+type application struct {
+	filesystem string
 }
 
-type Users struct {
-	Users []User
+func NewApplication(filesystem string) *application {
+	return &application{
+		filesystem: filesystem,
+	}
 }
 
-func RegisterRoutes(r *http.ServeMux) {
-	r.HandleFunc("/create", CreateUserHandler)
-	r.HandleFunc("/listusers", ListUsersHandler)
-	r.HandleFunc("/updateuser", UpdateUserHandler)
+func (a *application) RegisterRoutes(r *http.ServeMux) {
+	r.HandleFunc("/create", a.CreateUserHandler)
+	r.HandleFunc("/listusers", a.ListUsersHandler)
+	r.HandleFunc("/updateuser", a.UpdateUserHandler)
 
 }
 
-func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
+func (a *application) Create(user *models.User) error {
+
+	err := os.Chdir(a.filesystem)
+	if err != nil {
+		return errors.New("unable to cd to dir")
+	}
+
+	if _, err := os.Stat("user.json"); errors.Is(err, os.ErrNotExist) {
+		var users models.Users
+		users.Users = append(users.Users, *user)
+
+		usersBytes, err := json.Marshal(users.Users)
+		if err != nil {
+			return errors.New("unable to marshal users")
+		}
+		err = os.WriteFile("user.json", usersBytes, 0777)
+		if err != nil {
+			return errors.New("unable to write file")
+		}
+		return nil
+	}
+
+	readFile, err := os.ReadFile("user.json")
+	if err != nil {
+		return errors.New("unable to read file")
+	}
+
+	var us models.Users
+	err = json.Unmarshal(readFile, &us.Users)
+	if err != nil {
+		return errors.New("unable to unmarshal updated users")
+	}
+
+	us.Users = append(us.Users, *user)
+	updatedUsersBytes, err := json.Marshal(us.Users)
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile("user.json", updatedUsersBytes, 0777)
+	if err != nil {
+		return errors.New("unable to write users file")
+
+	}
+
+	return nil
+}
+
+func (a *application) CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Body == nil {
 		http.Error(w, "no body supplied", http.StatusBadRequest)
 		return
@@ -37,51 +87,12 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user User
+	var user models.User
 	err = json.Unmarshal(bodyBytes, &user)
 
-	if _, err := os.Stat("user.json"); errors.Is(err, os.ErrNotExist) {
-		var users Users
-		users.Users = append(users.Users, user)
-
-		usersBytes, err := json.Marshal(users.Users)
-		if err != nil {
-			http.Error(w, "unable to marshal user", http.StatusInternalServerError)
-			return
-		}
-		err = os.WriteFile("user.json", usersBytes, 0777)
-		if err != nil {
-			http.Error(w, "unable to write file", http.StatusInternalServerError)
-			return
-		}
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	readFile, err := os.ReadFile("user.json")
+	err = a.Create(&user)
 	if err != nil {
-		http.Error(w, "unable to read file", http.StatusInternalServerError)
-		return
-	}
-
-	var us Users
-	err = json.Unmarshal(readFile, &us.Users)
-	if err != nil {
-		http.Error(w, "unable to unmarshal updated users", http.StatusInternalServerError)
-		return
-	}
-
-	us.Users = append(us.Users, user)
-
-	updatedUsersBytes, err := json.Marshal(us.Users)
-	if err != nil {
-		http.Error(w, "unable to marshal updated users", http.StatusInternalServerError)
-		return
-	}
-
-	err = os.WriteFile("user.json", updatedUsersBytes, 0777)
-	if err != nil {
-		http.Error(w, "unable to write updated users to file", http.StatusInternalServerError)
+		http.Error(w, "unable to marshal user", http.StatusInternalServerError)
 		return
 	}
 
@@ -89,8 +100,12 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func ListUsersHandler(w http.ResponseWriter, r *http.Request) {
+func (a *application) ListUsersHandler(w http.ResponseWriter, r *http.Request) {
+
+	//check the error
+	os.Chdir(a.filesystem)
 	userBytes, err := os.ReadFile("user.json")
+
 	if err != nil {
 		http.Error(w, "unable to process users", http.StatusInternalServerError)
 		return
@@ -105,7 +120,7 @@ func ListUsersHandler(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
+func (a *application) UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Body == nil {
 		http.Error(w, "no body supplied", http.StatusBadRequest)
 		return
@@ -117,7 +132,7 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var userUpdate User
+	var userUpdate models.User
 	err = json.Unmarshal(bodyBytes, &userUpdate)
 	if err != nil {
 		http.Error(w, "unable to process user update", http.StatusInternalServerError)
@@ -130,7 +145,7 @@ func UpdateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var currentUsers Users
+	var currentUsers models.Users
 	err = json.Unmarshal(userFile, &currentUsers.Users)
 	if err != nil {
 		http.Error(w, "unable to process current users", http.StatusInternalServerError)
