@@ -9,6 +9,8 @@ import (
 func main() {
 	r := http.NewServeMux()
 
-	handlers.RegisterRoutes(r)
+	application := handlers.NewApplication(".")
+
+	application.RegisterRoutes(r)
 	http.ListenAndServe(":8080", r)
 }
