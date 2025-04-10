@@ -11,6 +11,7 @@ import (
 	"github.com/redscaresu/usersAPI/handlers"
 	"github.com/redscaresu/usersAPI/handlers/models"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestCreateUser(t *testing.T) {
@@ -24,10 +25,10 @@ func TestCreateUser(t *testing.T) {
 		EmailAddress: "foo@foo.com",
 	}
 
-	var buf bytes.Buffer
-	json.NewEncoder(&buf).Encode(expectedUser)
+	buf, err := json.Marshal(expectedUser)
+	require.NoError(t, err)
 
-	req := httptest.NewRequest(http.MethodPost, "/create", &buf)
+	req := httptest.NewRequest(http.MethodPost, "/create", bytes.NewReader(buf))
 	w := httptest.NewRecorder()
 
 	r.ServeHTTP(w, req)
